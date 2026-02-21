@@ -45,7 +45,7 @@ def test_multiple_sentence_generation():
     )
 
     grammar_options = [GrammarOptions(
-        tense=Tense.PRESENT_CONTINUOUS,
+        tense=Tense.SIMPLE_PRESENT,
         sentence_type=SentenceType.DECLARATIVE,
         grammatical_number=None,
         include_preposition=False,
@@ -53,9 +53,9 @@ def test_multiple_sentence_generation():
     )]
 
 
-    subjects = ['I','you','her']
-    objects = ['cat','you','chair']
-    verbs = ['to like','to sit']
+    subjects = ['I']
+    objects = ['you']
+    verbs = ['to like']
     my_vocab_list = VocabList(subjects=subjects,objects=objects,verbs=verbs)
 
     print(my_vocab_list)

@@ -18,7 +18,7 @@ class GeminiSentenceGenerator:
         self._llm_options = llm_options
 
     # Helper function
-    def process_vocab_products(subjects: list[str], objects: list[str]) -> list[list[str]]:
+    def process_vocab_products(self,subjects: list[str], objects: list[str]) -> list[list[str]]:
         nouns = list(set(subjects + objects))
         return [list(pair) for pair in itertools.combinations(nouns, 2)]
 
