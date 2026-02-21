@@ -17,10 +17,11 @@
 - [x] Converted to Async
 - [x] Validator
 
-## Deck Repository
-- [ ] Domain ABC
-- [ ] Infrastructure CSV implementation
-- [ ] Infrastructure Anki implementation
+## Deck Writer
+- [x] Domain ABC
+- [x] Infrastructure CSV implementation
+- [x] Infrastructure Anki implementation
+- [x] Support Audio (Need to verify)
 
 ## Text-to-Speech
 - [ ] Domain ABC

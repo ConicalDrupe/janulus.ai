@@ -34,9 +34,11 @@ class AnkiDeckWriter(DeckWriter):
 
         anki_deck = genanki.Deck(deck_id, deck.name)
 
+        media_files = [entry.audio_path for entry in deck.entries if entry.audio_path]
+
         for entry in deck.entries:
             if entry.audio_path:
-                front = f"{entry.foreign_text} [sound:{entry.audio_path}]"
+                front = f"{entry.foreign_text} [sound:{Path(entry.audio_path).name}]"
             else:
                 front = entry.foreign_text
 
@@ -48,6 +50,6 @@ class AnkiDeckWriter(DeckWriter):
             anki_deck.add_note(note)
 
         output_path = self.output_dir / f"{deck.name}.apkg"
-        genanki.Package(anki_deck).write_to_file(str(output_path))
+        genanki.Package(anki_deck, media_files=media_files).write_to_file(str(output_path))
 
         return deck.name

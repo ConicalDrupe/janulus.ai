@@ -1,6 +1,8 @@
 import csv
+import json
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -76,8 +78,39 @@ def test_csv_writer():
 
 
 def test_anki_writer():
-    deck = _sample_deck()
     with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a real (dummy) audio file for the entry that has audio
+        audio_file = Path(tmpdir) / "she_reads.mp3"
+        audio_file.write_bytes(b"")
+
+        entries = [
+            DeckEntry(
+                primary_language_code="en",
+                foreign_language_code="hi",
+                primary_text="I eat an apple.",
+                foreign_text="मैं एक सेब खाता हूँ।",
+                audio_path=None,
+                tags=["simple-present", "declarative"],
+            ),
+            DeckEntry(
+                primary_language_code="en",
+                foreign_language_code="hi",
+                primary_text="She is reading a book.",
+                foreign_text="वह एक किताब पढ़ रही है।",
+                audio_path=str(audio_file),
+                tags=["present-continuous", "declarative", "audio"],
+            ),
+            DeckEntry(
+                primary_language_code="en",
+                foreign_language_code="hi",
+                primary_text="Did they go to the market?",
+                foreign_text="क्या वे बाज़ार गए?",
+                audio_path=None,
+                tags=["simple-past", "interrogative"],
+            ),
+        ]
+        deck = Deck(name="hindi_noaudio_simple-present_declarative", entries=entries)
+
         writer = AnkiDeckWriter(Path(tmpdir))
         result = writer.write(deck)
 
@@ -85,6 +118,18 @@ def test_anki_writer():
 
         output_path = Path(tmpdir) / f"{deck.name}.apkg"
         assert output_path.exists(), ".apkg file was not created"
+
+        with zipfile.ZipFile(output_path) as zf:
+            names = zf.namelist()
+            assert "media" in names, "media entry missing from .apkg"
+
+            media_map = json.loads(zf.read("media"))
+            assert "she_reads.mp3" in media_map.values(), (
+                f"she_reads.mp3 not found in media map: {media_map}"
+            )
+
+            numeric_key = next(k for k, v in media_map.items() if v == "she_reads.mp3")
+            assert numeric_key in names, f"Audio file entry '{numeric_key}' missing from .apkg"
 
 
 def test_build_deck_name():
