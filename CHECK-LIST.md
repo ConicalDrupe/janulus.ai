@@ -15,7 +15,7 @@
 - [x] Infrastructure Implementation (Single Sentenc)
 - [x] Infrastructure Implementation (Multiple Sentences from VocabList)
 - [x] Converted to Async
-- [ ] Validator
+- [x] Validator
 
 ## Deck Repository
 - [ ] Domain ABC
@@ -36,6 +36,10 @@
 - [ ] Save Sentences to Anki or CSV (save tags)
 
 ### Caching
+- [ ] db models
+ - [ ] DbVocab (hash_id, L1,L2,L1_text,L2_text,audio,tags)
+ - [ ] DbSentence (hash_id, L1,L2,L1_text,L2_text,audio,tags)
+ - [ ] DbAudio (hash_id, L1,L2,L1_text,L2_text, voice, voice_model,tags)
 
 
 # Demo
