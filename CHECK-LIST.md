@@ -12,19 +12,27 @@
 ## Sentence Generation
 - [x] Domain GrammarOptions
 - [x] Domain GeneratedSentence
-- [ ] Infrastructure Implementation
+- [x] Infrastructure Implementation (Single Sentenc)
+- [ ] Infrastructure Implementation (Multiple Sentences from VocabList)
 - [ ] Validator
+
+## Deck Repository
+- [ ] Domain ABC
+- [ ] Infrastructure CSV implementation
+- [ ] Infrastructure Anki implementation
 
 ## Text-to-Speech
 - [ ] Domain ABC
 - [ ] Infrastructure Google Implementation
 - [ ] Infrastructure Eleven Labs Implementation
 
+# Use Cases
 
-## Deck Repository
-- [ ] Domain ABC
-- [ ] Infrastructure CSV implementation
-- [ ] Infrastructure Anki implementation
+# Sentence Generator
+- [ ] Ingest Vocab (Selection of Anki Deck or CSV)
+- [ ] Generate Sentences
+- [ ] Save Sentences
+- [ ] Save Sentences to Anki or CSV (save tags)
 
 ### Caching
 
