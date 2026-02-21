@@ -13,7 +13,8 @@
 - [x] Domain GrammarOptions
 - [x] Domain GeneratedSentence
 - [x] Infrastructure Implementation (Single Sentenc)
-- [ ] Infrastructure Implementation (Multiple Sentences from VocabList)
+- [x] Infrastructure Implementation (Multiple Sentences from VocabList)
+- [x] Converted to Async
 - [ ] Validator
 
 ## Deck Repository

@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 from pathlib import Path
@@ -12,6 +13,10 @@ from infrastructure.gemini_sentence_generator import GeminiSentenceGenerator
 
 
 def test_single_sentence_generation():
+    asyncio.run(_test_single_sentence_generation())
+
+
+async def _test_single_sentence_generation():
     llm_options = LLMOptions(model_id="gemini-3-flash-preview")
 
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
@@ -30,12 +35,16 @@ def test_single_sentence_generation():
         include_possession=False,
     )
 
-    sentence = sentence_generator.generate_sentence(
+    sentence = await sentence_generator.generate_sentence(
         nouns=["I"], verb="to walk", target_language="Hindi", grammar_options=grammar_options
     )
 
 
 def test_multiple_sentence_generation():
+    asyncio.run(_test_multiple_sentence_generation())
+
+
+async def _test_multiple_sentence_generation():
     llm_options = LLMOptions(model_id="gemini-3-flash-preview")
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
     google_client = genai.Client(vertexai=True, project=project_id, location="global")
@@ -52,16 +61,15 @@ def test_multiple_sentence_generation():
         include_possession=False,
     )]
 
-
     subjects = ['I']
     objects = ['you']
     verbs = ['to like']
-    my_vocab_list = VocabList(subjects=subjects,objects=objects,verbs=verbs)
+    my_vocab_list = VocabList(subjects=subjects, objects=objects, verbs=verbs)
 
     print(my_vocab_list)
     print('\n'*3)
 
-    sentences = sentence_generator.generate_all_sentence(
+    sentences = await sentence_generator.generate_all_sentence(
         vocab=my_vocab_list, target_language="Hindi", grammar_options_list=grammar_options
     )
 

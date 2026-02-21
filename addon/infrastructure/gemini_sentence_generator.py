@@ -1,5 +1,5 @@
+import asyncio
 import itertools
-from pprint import pprint
 
 from domain.models.generated_sentence import GeneratedSentence
 from domain.models.grammar_options import GrammarOptions
@@ -11,34 +11,32 @@ from infrastructure.models.gemini_generated_sentence import \
     GeminiGeneratedSentence
 
 
-class GeminiSentenceGenerator:
+class GeminiSentenceGenerator(SentenceGenerator):
 
     def __init__(self, client: genai.Client, llm_options: LLMOptions):
         self._client = client
         self._llm_options = llm_options
 
     # Helper function
-    def process_vocab_products(self,subjects: list[str], objects: list[str]) -> list[list[str]]:
+    def process_vocab_products(self, subjects: list[str], objects: list[str]) -> list[list[str]]:
         nouns = list(set(subjects + objects))
         return [list(pair) for pair in itertools.combinations(nouns, 2)]
 
-    def generate_all_sentence(
+    async def generate_all_sentence(
         self, vocab: VocabList, target_language: str, grammar_options_list: list[GrammarOptions]
     ) -> list[GeneratedSentence]:
 
-        # for nouns in VocabList
-        noun_permutations = self.process_vocab_products(vocab.subjects,vocab.objects)
+        noun_permutations = self.process_vocab_products(vocab.subjects, vocab.objects)
 
-        generated_sentences = []
-        for grammar_option in grammar_options_list:
-            for verb in vocab.verbs:
-                for noun_pair in noun_permutations:
-                    gen_sentence = self.generate_sentence(nouns=noun_pair,verb=verb,target_language=target_language,grammar_options=grammar_option)
-                    generated_sentences.append(gen_sentence)
+        tasks = [
+            self.generate_sentence(nouns=noun_pair, verb=verb, target_language=target_language, grammar_options=grammar_option)
+            for grammar_option in grammar_options_list
+            for verb in vocab.verbs
+            for noun_pair in noun_permutations
+        ]
+        return list(await asyncio.gather(*tasks))
 
-        return generated_sentences
-
-    def generate_sentence(
+    async def generate_sentence(
         self,
         nouns: list[str],
         verb: str,
@@ -61,7 +59,7 @@ class GeminiSentenceGenerator:
         - Plurality: {grammar_options.grammatical_number}
         """
 
-        response = self._client.models.generate_content(
+        response = await self._client.aio.models.generate_content(
             model=self._llm_options.model_id,
             contents=prompt,
             config={
@@ -70,12 +68,7 @@ class GeminiSentenceGenerator:
             },
         )
 
-        # print("Response Text \n\n")
-        # pprint(response)
-        # print("\n" * 6)
-
         response_sentence = GeminiGeneratedSentence.model_validate_json(response.text)
-        # print(response_sentence)
 
         return GeneratedSentence(
             L1="english",
