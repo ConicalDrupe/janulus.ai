@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from addon.domain.models.grammar_options import GrammarOptions
+from domain.models.grammar_options import GrammarOptions
 
 
 @dataclass
