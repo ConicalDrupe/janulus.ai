@@ -70,9 +70,9 @@ class GeminiSentenceGenerator:
             },
         )
 
-        print("Response Text \n\n")
-        pprint(response)
-        print("\n" * 6)
+        # print("Response Text \n\n")
+        # pprint(response)
+        # print("\n" * 6)
 
         response_sentence = GeminiGeneratedSentence.model_validate_json(response.text)
         # print(response_sentence)
