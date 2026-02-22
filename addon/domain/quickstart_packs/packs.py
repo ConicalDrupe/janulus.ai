@@ -16,6 +16,11 @@ QUICKSTART_PACKS: dict[str, VocabList] = {
         objects=["food"],
         verbs=["to eat"],
     ),
+    "Classic Questions": VocabList(
+        subjects=["where","what","this","that"],
+        objects=[],
+        verbs=["to be"],
+    ),
     "Core Pronouns": VocabList(
         subjects=["I", "you", "he", "she", "we", "they", "it"],
         objects=["me", "you", "him", "her", "us", "them", "it"],

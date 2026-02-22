@@ -40,7 +40,7 @@ class GeminiTtsGenerator(TtsGenerator):
         client: genai.Client,
         voice_name: str = "Kore",
         model_id: str = "gemini-2.5-flash-tts",
-        director_prompt: str = "Speak slowly and clearly pronounce: ",
+        director_prompt: str = "Clearly pronounce: ",
     ):
         self._audio_dir = audio_dir
         self._client = client
