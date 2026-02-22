@@ -96,6 +96,7 @@ class SentenceDeckService:
                 tags.append(sentence.grammar_options.sentence_type.value)
             if audio_path:
                 tags.append("audio")
+            tags.append(L2.strip().lower().replace(" ", "_"))
 
             entries.append(
                 DeckEntry(

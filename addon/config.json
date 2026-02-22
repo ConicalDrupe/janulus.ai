@@ -3,7 +3,7 @@
     "L2": "hindi",
     "llm_model_id": "gemini-3-flash-preview",
     "llm_temperature": 0.1,
-    "tts_voice": "Kore",
+    "tts_voice": "Achird",
     "tts_voice_gender": "male",
     "tts_voice_model": ""
 }

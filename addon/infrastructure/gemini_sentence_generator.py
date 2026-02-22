@@ -57,6 +57,12 @@ class GeminiSentenceGenerator(SentenceGenerator):
         - Include prepositional phrase: {grammar_options.include_preposition}
         - Sentence type: {grammar_options.sentence_type}
         - Plurality: {grammar_options.grammatical_number}
+
+        First, correct the English sentence to be grammatically accurate and natural (including adding missing articles)
+        Then, provide the accurate translation in {target_language}.
+        Return both versions clearly labeled as:
+        English:
+        {target_language}:
         """
 
         response = await self._client.aio.models.generate_content(

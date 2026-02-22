@@ -1,11 +1,10 @@
 from pathlib import Path
 
 import genanki
-
 from domain.deck_writer import DeckWriter
 from domain.models.deck import Deck
 
-_MODEL_ID = 1607392319  # stable arbitrary model ID for Basic card type
+_MODEL_ID = 1708392319  # stable arbitrary model ID for Janulus AI card type
 
 
 class AnkiDeckWriter(DeckWriter):
@@ -18,18 +17,46 @@ class AnkiDeckWriter(DeckWriter):
 
         anki_model = genanki.Model(
             _MODEL_ID,
-            "Basic",
+            "Janulus AI",
             fields=[
-                {"name": "Front"},
-                {"name": "Back"},
+                {"name": "Primary"},
+                {"name": "Foreign"},
+                {"name": "Sound"},
             ],
             templates=[
                 {
                     "name": "Card 1",
-                    "qfmt": "{{Front}}",
-                    "afmt": "{{FrontSide}}<hr id=answer>{{Back}}",
+                    "qfmt": '<div class="primary">{{Primary}}</div>',
+                    "afmt": '{{FrontSide}}<hr id="answer"><div class="foreign">{{Foreign}}</div>\n{{#Sound}}<div class="sound-btn">{{Sound}}</div>{{/Sound}}',
                 },
             ],
+            css="""
+.card {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 20px;
+  text-align: center;
+  color: #2c3e50;
+  padding: 30px 20px;
+}
+.primary {
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.foreign {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.5;
+  margin-top: 16px;
+}
+hr#answer {
+  border: none;
+  border-top: 1px solid #d5d8dc;
+  margin: 20px 0;
+}
+""",
         )
 
         anki_deck = genanki.Deck(deck_id, deck.name)
@@ -37,14 +64,11 @@ class AnkiDeckWriter(DeckWriter):
         media_files = [entry.audio_path for entry in deck.entries if entry.audio_path]
 
         for entry in deck.entries:
-            if entry.audio_path:
-                front = f"{entry.foreign_text} [sound:{Path(entry.audio_path).name}]"
-            else:
-                front = entry.foreign_text
+            sound_field = f"[sound:{Path(entry.audio_path).name}]" if entry.audio_path else ""
 
             note = genanki.Note(
                 model=anki_model,
-                fields=[front, entry.primary_text],
+                fields=[entry.primary_text, entry.foreign_text, sound_field],
                 tags=entry.tags,
             )
             anki_deck.add_note(note)
