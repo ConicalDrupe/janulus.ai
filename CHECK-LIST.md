@@ -2,10 +2,10 @@
 # Main Components
 
 ## Vocab Personalization
-- [ ] Test Prompts in Gemini
-    - [ ] Questions for User to answer
+- [x] Test Prompts in Gemini
+    - [x] Questions for User to answer
 - [x] Domain Entities (VocabList)
-- [ ] Domain Abstract Class
+- [x] Domain Abstract Class
 - [ ] Infrastructure Concrete Class
 - [ ] Test
 
@@ -32,10 +32,10 @@
 
 # Sentence Generator
 - [ ] Generate Personalized Vocab -> Insert into Anki or Save as CSV (save tags too)
-- [ ] Generate Quickstart Vocab -> Insert into Anki or Save as CSV (save tags too)
+- [x] Generate Quickstart Vocab -> Insert into Anki or Save as CSV (save tags too)
 <!-- - [ ] Ingest Vocab (Selection of Anki Deck or CSV) -->
 - [ ] Generate Vocab -> Generate Sentences -> Insert into Anki or Save as CSV (save tags too)
-- [ ] Save Sentences to Anki or CSV (save tags)
+- [x] Save Sentences to Anki or CSV (save tags)
 
 ### Caching
 - [x] db models
@@ -48,4 +48,5 @@
 # Submission
 - [ ] 2-min video
 - [ ] github readme
+    - [ ] Use instructions
 - [ ] DevPost
