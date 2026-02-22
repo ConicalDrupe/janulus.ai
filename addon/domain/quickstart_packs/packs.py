@@ -6,6 +6,11 @@ QUICKSTART_PACKS: dict[str, VocabList] = {
         objects=["cat"],
         verbs=["to like", "to have"],
     ),
+    "Classic": VocabList(
+        subjects=["I", "you","she","they"],
+        objects=["books"],
+        verbs=["to buy"],
+    ),
     "Core Pronouns": VocabList(
         subjects=["I", "you", "he", "she", "we", "they", "it"],
         objects=["me", "you", "him", "her", "us", "them", "it"],
@@ -57,7 +62,6 @@ QUICKSTART_PACKS: dict[str, VocabList] = {
     "Interrogatives": VocabList(
         subjects=[
             "you",
-            "he",
             "she",
             "they",
             "where",
