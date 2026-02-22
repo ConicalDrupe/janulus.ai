@@ -9,4 +9,5 @@ dependencies = [
     "google>=3.0.0",
     "google-cloud-translate>=3.24.0",
     "google-genai>=1.64.0",
+    "sqlalchemy>=2.0.46",
 ]
