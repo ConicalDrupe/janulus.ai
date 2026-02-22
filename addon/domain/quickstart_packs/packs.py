@@ -6,10 +6,15 @@ QUICKSTART_PACKS: dict[str, VocabList] = {
         objects=["cat"],
         verbs=["to like", "to have"],
     ),
-    "Classic": VocabList(
+    "Classic Buy": VocabList(
         subjects=["I", "you","she","they"],
         objects=["books"],
         verbs=["to buy"],
+    ),
+    "Classic Food": VocabList(
+        subjects=["I", "you","she","they"],
+        objects=["food"],
+        verbs=["to eat"],
     ),
     "Core Pronouns": VocabList(
         subjects=["I", "you", "he", "she", "we", "they", "it"],

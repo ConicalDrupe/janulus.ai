@@ -2,11 +2,10 @@ import hashlib
 import wave
 from pathlib import Path
 
-from google import genai
-from google.genai import types
-
 from domain.models.generated_sentence import GeneratedSentence
 from domain.tts_generator import TtsGenerator
+from google import genai
+from google.genai import types
 
 
 def _compute_audio_hash(L2: str, L2_text: str, voice_name: str) -> str:
@@ -24,6 +23,7 @@ def _write_wav(path: Path, pcm: bytes, channels: int = 1, rate: int = 24000, sam
 
 # Hyphens in the path prevent a standard import; load with importlib at module level.
 import importlib.util as _ilu
+
 _spec = _ilu.spec_from_file_location(
     "plain_lang_bcp47",
     Path(__file__).parent / "lang-lookups" / "plain-lang-to-bcrp-47.py",
@@ -40,7 +40,7 @@ class GeminiTtsGenerator(TtsGenerator):
         client: genai.Client,
         voice_name: str = "Kore",
         model_id: str = "gemini-2.5-flash-tts",
-        director_prompt: str = "",
+        director_prompt: str = "Speak slowly and clearly pronounce: ",
     ):
         self._audio_dir = audio_dir
         self._client = client
