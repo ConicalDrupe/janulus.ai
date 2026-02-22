@@ -1,0 +1,8 @@
+{
+    "L1": "english",
+    "L2": "hindi",
+    "llm_model_id": "gemini-3-flash-preview",
+    "llm_temperature": 0.1,
+    "tts_voice_gender": "male",
+    "tts_voice_model": ""
+}
