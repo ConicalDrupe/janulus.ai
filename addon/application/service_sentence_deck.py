@@ -7,6 +7,7 @@ from domain.models.grammar_options import GrammarOptions
 from domain.models.vocab_list import VocabList
 from domain.repository.sentence_repository import SentenceRepository
 from domain.sentence_generator import SentenceGenerator
+from domain.sentence_validator import SentenceValidator
 from domain.tts_generator import TtsGenerator
 
 
@@ -16,10 +17,12 @@ class SentenceDeckService:
         generator: SentenceGenerator,
         tts: TtsGenerator | None = None,
         sentence_repo: SentenceRepository | None = None,
+        validator: SentenceValidator | None = None,
     ) -> None:
         self._generator = generator
         self._tts = tts
         self._sentence_repo = sentence_repo
+        self._validator = validator
 
     async def build_deck(
         self,
@@ -47,8 +50,9 @@ class SentenceDeckService:
             if self._sentence_repo is not None:
                 result = self._sentence_repo.find(L1, L2, noun_pair, verb, opts)
                 if result is not None:
-                    sentence, _ = result
-                    hits.append((sentence, noun_pair, verb))
+                    sentence, is_valid = result
+                    if is_valid is not False:
+                        hits.append((sentence, noun_pair, verb))
                     continue
             to_generate.append((noun_pair, verb, opts))
 
@@ -71,6 +75,29 @@ class SentenceDeckService:
                     self._sentence_repo.save(sentence, n, v)
                 except ValueError:
                     pass  # already cached (race condition)
+
+        # Validate new sentences; exclude rejects from the deck
+        if self._validator is not None:
+            semaphore = asyncio.Semaphore(10)
+
+            async def _guarded_validate(sentence):
+                async with semaphore:
+                    return await self._validator.validate(sentence)
+
+            validation_results = await asyncio.gather(*[
+                _guarded_validate(sentence)
+                for sentence, n, v in new_sentences
+            ])
+            accepted: list[tuple[object, list[str], str]] = []
+            for (sentence, n, v), is_valid in zip(new_sentences, validation_results):
+                if is_valid:
+                    if self._sentence_repo is not None:
+                        self._sentence_repo.mark_valid(sentence, n, v)
+                    accepted.append((sentence, n, v))
+                else:
+                    if self._sentence_repo is not None:
+                        self._sentence_repo.mark_rejected(sentence, n, v)
+            new_sentences = accepted
 
         all_triples = hits + new_sentences
 

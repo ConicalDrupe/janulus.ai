@@ -34,6 +34,7 @@ from domain.quickstart_packs.packs import QUICKSTART_PACKS
 from infrastructure.anki_deck_writer import AnkiDeckWriter
 from infrastructure.csv_deck_writer import CsvDeckWriter
 from infrastructure.gemini_sentence_generator import GeminiSentenceGenerator
+from infrastructure.gemini_sentence_validator import GeminiSentenceValidator
 from infrastructure.gemini_tts_generator import GeminiTtsGenerator, plain_language_to_bcp47
 from sqlalchemy import Engine
 
@@ -329,7 +330,8 @@ class JanulusDialog(QDialog):
 
         from infrastructure.repository.sqlite_sentence_repository import SqliteSentenceRepository
         sentence_repo = SqliteSentenceRepository(self._engine)
-        return SentenceDeckService(generator=generator, tts=tts, sentence_repo=sentence_repo)
+        validator = GeminiSentenceValidator(client=client, llm_options=llm_options)
+        return SentenceDeckService(generator=generator, tts=tts, sentence_repo=sentence_repo, validator=validator)
 
     def _on_generate(self):
         vocab = QUICKSTART_PACKS[self._pack_combo.currentText()]
