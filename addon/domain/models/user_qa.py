@@ -1,7 +1,8 @@
-from dataclass import dataclass
+from dataclasses import dataclass
+
 
 @dataclass
 class UserQA:
-        questions: list[str]
-        answers: list[str]
-        
+    questions: list[str]
+    answers: list[str]
+
