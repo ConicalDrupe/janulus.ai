@@ -55,20 +55,26 @@ _GEMINI_TTS_VOICES = [
 ]
 _GEMINI_TTS_VOICES = sorted(set(_GEMINI_TTS_VOICES))
 
-_TENSE_LABELS: dict[Tense, str] = {
-    Tense.SIMPLE_PRESENT: "Simple Present",
-    Tense.PRESENT_CONTINUOUS: "Present Continuous",
-    Tense.PRESENT_PERFECT: "Present Perfect",
-    Tense.PRESENT_PERFECT_CONTINUOUS: "Present Perfect Continuous",
-    Tense.SIMPLE_PAST: "Simple Past",
-    Tense.PAST_CONTINUOUS: "Past Continuous",
-    Tense.PAST_PERFECT: "Past Perfect",
-    Tense.PAST_PERFECT_CONTINUOUS: "Past Perfect Continuous",
-    Tense.SIMPLE_FUTURE: "Simple Future",
-    Tense.FUTURE_CONTINUOUS: "Future Continuous",
-    Tense.FUTURE_PERFECT: "Future Perfect",
-    Tense.FUTURE_PERFECT_CONTINUOUS: "Future Perfect Continuous",
-}
+_TENSE_GROUPS: list[tuple[str, list[tuple[Tense, str]]]] = [
+    ("Present", [
+        (Tense.SIMPLE_PRESENT, "Simple"),
+        (Tense.PRESENT_CONTINUOUS, "Progressive"),
+        (Tense.PRESENT_PERFECT, "Perfect"),
+        (Tense.PRESENT_PERFECT_CONTINUOUS, "Perf. Progressive"),
+    ]),
+    ("Past", [
+        (Tense.SIMPLE_PAST, "Simple"),
+        (Tense.PAST_CONTINUOUS, "Progressive"),
+        (Tense.PAST_PERFECT, "Perfect"),
+        (Tense.PAST_PERFECT_CONTINUOUS, "Perf. Progressive"),
+    ]),
+    ("Future", [
+        (Tense.SIMPLE_FUTURE, "Simple"),
+        (Tense.FUTURE_CONTINUOUS, "Progressive"),
+        (Tense.FUTURE_PERFECT, "Perfect"),
+        (Tense.FUTURE_PERFECT_CONTINUOUS, "Perf. Progressive"),
+    ]),
+]
 
 _SENTENCE_TYPE_LABELS: dict[SentenceType, str] = {
     SentenceType.DECLARATIVE: "Declarative",
@@ -192,11 +198,16 @@ class JanulusDialog(QDialog):
         grammar_layout = QVBoxLayout(grammar_box)
 
         tense_row = QHBoxLayout()
-        tense_row.addWidget(QLabel("Tense:"))
-        self._tense_combo = QComboBox()
-        for tense, label in _TENSE_LABELS.items():
-            self._tense_combo.addItem(label, userData=tense)
-        tense_row.addWidget(self._tense_combo, 1)
+        self._tense_checks: dict[Tense, QCheckBox] = {}
+        for group_name, tenses in _TENSE_GROUPS:
+            group_box = QGroupBox(group_name)
+            group_layout = QVBoxLayout(group_box)
+            for tense, label in tenses:
+                cb = QCheckBox(label)
+                cb.setChecked(tense == Tense.SIMPLE_PRESENT)
+                self._tense_checks[tense] = cb
+                group_layout.addWidget(cb)
+            tense_row.addWidget(group_box)
         grammar_layout.addLayout(tense_row)
 
         type_row = QHBoxLayout()
@@ -286,13 +297,16 @@ class JanulusDialog(QDialog):
     # ── Generation ────────────────────────────────────────────────────────────
 
     def _build_grammar_options(self) -> list[GrammarOptions]:
-        tense: Tense = self._tense_combo.currentData()
-        include_preposition = self._preposition_check.isChecked()
-        include_possession = self._possession_check.isChecked()
+        selected_tenses = [t for t, cb in self._tense_checks.items() if cb.isChecked()]
+        if not selected_tenses:
+            selected_tenses = [Tense.SIMPLE_PRESENT]
 
         selected_types = [st for st, cb in self._type_checks.items() if cb.isChecked()]
         if not selected_types:
             selected_types = [SentenceType.DECLARATIVE]
+
+        include_preposition = self._preposition_check.isChecked()
+        include_possession = self._possession_check.isChecked()
 
         return [
             GrammarOptions(
@@ -302,6 +316,7 @@ class JanulusDialog(QDialog):
                 include_preposition=include_preposition,
                 include_possession=include_possession,
             )
+            for tense in selected_tenses
             for st in selected_types
         ]
 

@@ -101,10 +101,11 @@ class SentenceDeckService:
 
         all_triples = hits + new_sentences
 
-        # Derive deck name metadata from first grammar options
-        first_opts = grammar_options_list[0] if grammar_options_list else None
-        tense = first_opts.tense if first_opts else None
-        sentence_type = first_opts.sentence_type if first_opts else None
+        # Derive deck name metadata — None collapses to "mixed" in build_deck_name
+        unique_tenses = {opts.tense for opts in grammar_options_list}
+        tense = next(iter(unique_tenses)) if len(unique_tenses) == 1 else None
+        unique_types = {opts.sentence_type for opts in grammar_options_list}
+        sentence_type = next(iter(unique_types)) if len(unique_types) == 1 else None
 
         voice_name = getattr(self._tts, "_voice_name", "")
 
