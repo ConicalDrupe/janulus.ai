@@ -1,5 +1,6 @@
 import asyncio
 import itertools
+import random
 
 from domain.models.deck import Deck, build_deck_name
 from domain.models.deck_entry import DeckEntry
@@ -9,6 +10,19 @@ from domain.repository.sentence_repository import SentenceRepository
 from domain.sentence_generator import SentenceGenerator
 from domain.sentence_validator import SentenceValidator
 from domain.tts_generator import TtsGenerator
+
+
+async def _retry_with_backoff(coro_fn, max_retries: int = 4, base_delay: float = 1.0):
+    """Retry an async callable on 429/RESOURCE_EXHAUSTED with exponential backoff + jitter."""
+    for attempt in range(max_retries + 1):
+        try:
+            return await coro_fn()
+        except Exception as e:
+            is_rate_limit = "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)
+            if attempt == max_retries or not is_rate_limit:
+                raise
+            delay = base_delay * (2 ** attempt) + random.uniform(0, base_delay)
+            await asyncio.sleep(delay)
 
 
 class SentenceDeckService:
@@ -59,10 +73,18 @@ class SentenceDeckService:
         # Batch generate cache misses
         new_sentences: list[tuple[object, list[str], str]] = []
         if to_generate:
+            gen_semaphore = asyncio.Semaphore(3)
+
+            async def _guarded_generate(n, v, opts):
+                async with gen_semaphore:
+                    return await _retry_with_backoff(
+                        lambda: self._generator.generate_sentence(
+                            nouns=n, verb=v, target_language=L2, grammar_options=opts
+                        )
+                    )
+
             generated = await asyncio.gather(*[
-                self._generator.generate_sentence(
-                    nouns=n, verb=v, target_language=L2, grammar_options=opts
-                )
+                _guarded_generate(n, v, opts)
                 for (n, v, opts) in to_generate
             ])
             for (n, v, _opts), sentence in zip(to_generate, generated):
@@ -78,11 +100,13 @@ class SentenceDeckService:
 
         # Validate new sentences; exclude rejects from the deck
         if self._validator is not None:
-            semaphore = asyncio.Semaphore(10)
+            semaphore = asyncio.Semaphore(3)
 
             async def _guarded_validate(sentence):
                 async with semaphore:
-                    return await self._validator.validate(sentence)
+                    return await _retry_with_backoff(
+                        lambda: self._validator.validate(sentence)
+                    )
 
             validation_results = await asyncio.gather(*[
                 _guarded_validate(sentence)
