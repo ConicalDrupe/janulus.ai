@@ -10,6 +10,8 @@ from google import genai
 from infrastructure.models.gemini_generated_sentence import \
     GeminiGeneratedSentence
 
+_MAX_CONCURRENT_REQUESTS = 10
+
 
 class GeminiSentenceGenerator(SentenceGenerator):
 
@@ -27,9 +29,16 @@ class GeminiSentenceGenerator(SentenceGenerator):
     ) -> list[GeneratedSentence]:
 
         noun_permutations = self.process_vocab_products(vocab.subjects, vocab.objects)
+        semaphore = asyncio.Semaphore(_MAX_CONCURRENT_REQUESTS)
+
+        async def _guarded(nouns, verb, grammar_option):
+            async with semaphore:
+                return await self.generate_sentence(
+                    nouns=nouns, verb=verb, target_language=target_language, grammar_options=grammar_option
+                )
 
         tasks = [
-            self.generate_sentence(nouns=noun_pair, verb=verb, target_language=target_language, grammar_options=grammar_option)
+            _guarded(noun_pair, verb, grammar_option)
             for grammar_option in grammar_options_list
             for verb in vocab.verbs
             for noun_pair in noun_permutations
