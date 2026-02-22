@@ -31,16 +31,16 @@
 # Use Cases
 
 # Sentence Generator
-- [ ] Ingest Vocab (Selection of Anki Deck or CSV)
-- [ ] Generate Sentences
-- [ ] Save Sentences
+- [ ] Generate Personalized Vocab -> Insert into Anki or Save as CSV (save tags too)
+- [ ] Generate Quickstart Vocab -> Insert into Anki or Save as CSV (save tags too)
+<!-- - [ ] Ingest Vocab (Selection of Anki Deck or CSV) -->
+- [ ] Generate Vocab -> Generate Sentences -> Insert into Anki or Save as CSV (save tags too)
 - [ ] Save Sentences to Anki or CSV (save tags)
 
 ### Caching
-- [ ] db models
- - [ ] DbVocab (hash_id, L1,L2,L1_text,L2_text,audio,tags)
- - [ ] DbSentence (hash_id, L1,L2,L1_text,L2_text,audio,tags)
- - [ ] DbAudio (hash_id, L1,L2,L1_text,L2_text, voice, voice_model,tags)
+- [x] db models
+ - [x] DbVocab (hash_id, L1,L2,L1_text,L2_text,audio,tags)
+ - [x] DbSentence (hash_id, L1,L2,L1_text,L2_text,audio,tags)
 
 
 # Demo
