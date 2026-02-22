@@ -50,23 +50,31 @@ QUICKSTART_PACKS: dict[str, VocabList] = {
         ],
         verbs=["to want", "to order", "to have", "to like", "to buy", "to pay"],
     ),
-        "Interrogatives": VocabList(
+    "Interrogatives": VocabList(
         subjects=[
-            "I", "you", "he", "she", "we", "they",
-            "who", "what", "which", "where"
+            "I",
+            "you",
+            "he",
+            "she",
+            "we",
+            "they",
+            "who",
+            "what",
+            "which",
+            "where",
         ],
         objects=[
-            "what", "who", "which", "where", "when",
-            "this", "that", "it",
+            "what",
+            "who",
+            "which",
+            "where",
+            "when",
+            "this",
+            "that",
+            "it",
         ],
-        verbs=[
-            "to be",
-            "to know",
-            "to like",
-            "to mean"
-        ],
+        verbs=["to be", "to know", "to like", "to mean"],
     ),
-
     "Personal Introductions": VocabList(
         subjects=["I", "you", "we"],
         objects=[
@@ -78,12 +86,6 @@ QUICKSTART_PACKS: dict[str, VocabList] = {
             "from the city",
             "from the country",
         ],
-        verbs=[
-            "to be",
-            "to speak",
-            "to like",
-            "to meet"
-        ],
+        verbs=["to be", "to speak", "to like", "to meet"],
     ),
-}
 }
