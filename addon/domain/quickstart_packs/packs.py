@@ -1,6 +1,11 @@
 from domain.models.vocab_list import VocabList
 
 QUICKSTART_PACKS: dict[str, VocabList] = {
+    "Minimal": VocabList(
+        subjects=["I", "you"],
+        objects=["cat"],
+        verbs=["to like", "to have"],
+    ),
     "Core Pronouns": VocabList(
         subjects=["I", "you", "he", "she", "we", "they", "it"],
         objects=["me", "you", "him", "her", "us", "them", "it"],

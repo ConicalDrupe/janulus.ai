@@ -21,6 +21,15 @@ else:
         # Anki merges config.json defaults with per-profile user overrides
         user_config = mw.addonManager.getConfig(__name__)
 
+        from aqt.qt import QAction
+        from ui.main_dialog import JanulusDialog
+
+        action = QAction("Janulus AI...", mw)
+        action.triggered.connect(
+            lambda: JanulusDialog(mw, infra_config, engine, user_config).exec()
+        )
+        mw.form.menuTools.addAction(action)
+
     except Exception as e:
         from aqt.utils import showWarning
         showWarning(f"Janulus AI failed to initialise: {e}")
