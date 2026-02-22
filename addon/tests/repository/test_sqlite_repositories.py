@@ -15,37 +15,27 @@ def _make_engine():
     return create_engine("sqlite:///:memory:")
 
 
-def _make_sentence(L2_text: str = "मैं चलता हूँ") -> GeneratedSentence:
-    grammar_options = GrammarOptions(
+NOUNS = ["I", "dog"]
+VERB = "to walk"
+
+
+def _make_grammar_options() -> GrammarOptions:
+    return GrammarOptions(
         tense=Tense.SIMPLE_PRESENT,
         sentence_type=SentenceType.DECLARATIVE,
         grammatical_number=GrammaticalNumber.SINGULAR,
         include_preposition=False,
         include_possession=False,
     )
+
+
+def _make_sentence(L2_text: str = "मैं चलता हूँ") -> GeneratedSentence:
     return GeneratedSentence(
         L1="english",
         L2="hindi",
         L1_text="I walk",
         L2_text=L2_text,
-        grammar_options=grammar_options,
-    )
-
-
-def _make_sentence_no_optionals() -> GeneratedSentence:
-    grammar_options = GrammarOptions(
-        tense=Tense.PRESENT_CONTINUOUS,
-        sentence_type=None,
-        grammatical_number=None,
-        include_preposition=True,
-        include_possession=True,
-    )
-    return GeneratedSentence(
-        L1="english",
-        L2="hindi",
-        L1_text="I am walking to the park",
-        L2_text="मैं पार्क जा रहा हूँ",
-        grammar_options=grammar_options,
+        grammar_options=_make_grammar_options(),
     )
 
 
@@ -55,8 +45,8 @@ def _make_sentence_no_optionals() -> GeneratedSentence:
 def test_save_and_find_hit():
     repo = SqliteSentenceRepository(_make_engine())
     sentence = _make_sentence()
-    repo.save(sentence)
-    result = repo.find(sentence)
+    repo.save(sentence, NOUNS, VERB)
+    result = repo.find("english", "hindi", NOUNS, VERB, _make_grammar_options())
     assert result is not None, "Expected cache hit but got None"
     found_sentence, is_valid = result
     assert found_sentence.L1_text == sentence.L1_text
@@ -67,8 +57,7 @@ def test_save_and_find_hit():
 
 def test_cache_miss_returns_none():
     repo = SqliteSentenceRepository(_make_engine())
-    sentence = _make_sentence()
-    result = repo.find(sentence)
+    result = repo.find("english", "hindi", NOUNS, VERB, _make_grammar_options())
     assert result is None, f"Expected None on cache miss but got {result}"
     print("test_cache_miss_returns_none passed")
 
@@ -76,9 +65,9 @@ def test_cache_miss_returns_none():
 def test_mark_rejected_cached():
     repo = SqliteSentenceRepository(_make_engine())
     sentence = _make_sentence()
-    repo.save(sentence)
-    repo.mark_rejected(sentence)
-    result = repo.find(sentence)
+    repo.save(sentence, NOUNS, VERB)
+    repo.mark_rejected(sentence, NOUNS, VERB)
+    result = repo.find("english", "hindi", NOUNS, VERB, _make_grammar_options())
     assert result is not None
     _, is_valid = result
     assert is_valid is False, f"Expected is_valid=False but got {is_valid}"
@@ -91,9 +80,9 @@ def test_mark_rejected_cached():
 def test_mark_valid_not_in_rejected():
     repo = SqliteSentenceRepository(_make_engine())
     sentence = _make_sentence()
-    repo.save(sentence)
-    repo.mark_valid(sentence)
-    result = repo.find(sentence)
+    repo.save(sentence, NOUNS, VERB)
+    repo.mark_valid(sentence, NOUNS, VERB)
+    result = repo.find("english", "hindi", NOUNS, VERB, _make_grammar_options())
     assert result is not None
     _, is_valid = result
     assert is_valid is True, f"Expected is_valid=True but got {is_valid}"
@@ -106,15 +95,15 @@ def test_set_audio_path_sentence():
     engine = _make_engine()
     repo = SqliteSentenceRepository(engine)
     sentence = _make_sentence()
-    repo.save(sentence)
-    repo.set_audio_path(sentence, "/tmp/audio.mp3", "en-US-Wavenet-A", "tts-v2")
+    repo.save(sentence, NOUNS, VERB)
+    repo.set_audio_path(sentence, NOUNS, VERB, "/tmp/audio.mp3", "en-US-Wavenet-A", "tts-v2")
     from infrastructure.models.db_sentence import DbSentence
     from infrastructure.repository.sqlite_sentence_repository import _compute_sentence_hash
     from sqlalchemy.orm import sessionmaker
 
     Session = sessionmaker(bind=engine)
     with Session() as session:
-        h = _compute_sentence_hash(sentence.L1, sentence.L2, sentence.L2_text)
+        h = _compute_sentence_hash("english", "hindi", NOUNS, VERB, _make_grammar_options())
         row = session.query(DbSentence).filter(DbSentence.input_hash == h).first()
         assert row is not None
         assert row.audio_path == "/tmp/audio.mp3"
@@ -127,13 +116,28 @@ def test_set_audio_path_sentence():
 def test_duplicate_save_raises():
     repo = SqliteSentenceRepository(_make_engine())
     sentence = _make_sentence()
-    repo.save(sentence)
+    repo.save(sentence, NOUNS, VERB)
     try:
-        repo.save(sentence)
+        repo.save(sentence, NOUNS, VERB)
         assert False, "Expected ValueError on duplicate save"
     except ValueError:
         pass
     print("test_duplicate_save_raises passed")
+
+
+def test_different_nouns_different_cache_entry():
+    repo = SqliteSentenceRepository(_make_engine())
+    sentence1 = _make_sentence("मैं चलता हूँ")
+    sentence2 = _make_sentence("कुत्ता चलता है")
+    nouns1 = ["I"]
+    nouns2 = ["dog"]
+    repo.save(sentence1, nouns1, VERB)
+    repo.save(sentence2, nouns2, VERB)
+    result1 = repo.find("english", "hindi", nouns1, VERB, _make_grammar_options())
+    result2 = repo.find("english", "hindi", nouns2, VERB, _make_grammar_options())
+    assert result1 is not None and result1[0].L2_text == "मैं चलता हूँ"
+    assert result2 is not None and result2[0].L2_text == "कुत्ता चलता है"
+    print("test_different_nouns_different_cache_entry passed")
 
 
 # ── Vocab repository tests ─────────────────────────────────────────────────
@@ -193,6 +197,7 @@ if __name__ == "__main__":
     test_mark_valid_not_in_rejected()
     test_set_audio_path_sentence()
     test_duplicate_save_raises()
+    test_different_nouns_different_cache_entry()
     test_vocab_save_and_find()
     test_vocab_miss_returns_none()
     test_vocab_set_audio_path()

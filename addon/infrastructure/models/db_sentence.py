@@ -17,6 +17,8 @@ class DbSentence(Base):
     input_hash = Column(String, unique=True, nullable=False, index=True)
     L1 = Column(String, nullable=False)
     L2 = Column(String, nullable=False)
+    nouns = Column(String, nullable=False)
+    verb = Column(String, nullable=False)
     L1_text = Column(String, nullable=False)
     L2_text = Column(String, nullable=False)
     tense = Column(String, nullable=False)
