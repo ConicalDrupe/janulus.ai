@@ -327,7 +327,9 @@ class JanulusDialog(QDialog):
                 voice_name=self._voice_combo.currentText(),
             )
 
-        return SentenceDeckService(generator=generator, tts=tts)
+        from infrastructure.repository.sqlite_sentence_repository import SqliteSentenceRepository
+        sentence_repo = SqliteSentenceRepository(self._engine)
+        return SentenceDeckService(generator=generator, tts=tts, sentence_repo=sentence_repo)
 
     def _on_generate(self):
         vocab = QUICKSTART_PACKS[self._pack_combo.currentText()]
@@ -377,14 +379,14 @@ class JanulusDialog(QDialog):
         if self._deck is None:
             return
         try:
+            from aqt import mw
             writer = AnkiDeckWriter(output_dir=self._infra_config.user_files_dir)
-            deck_name = writer.write(self._deck)
-            out_path = self._infra_config.user_files_dir / f"{deck_name}.apkg"
-            QMessageBox.information(
-                self, "Saved", f"Anki deck saved to:\n{out_path}"
-            )
+            mw.checkpoint("Add Janulus AI Deck")
+            deck_name = writer.write_to_collection(self._deck)
+            mw.reset()
+            QMessageBox.information(self, "Done", f"Deck '{deck_name}' added to your collection.")
         except Exception as exc:
-            QMessageBox.critical(self, "Export failed", str(exc))
+            QMessageBox.critical(self, "Import failed", str(exc))
 
     def _on_save_csv(self):
         if self._deck is None:

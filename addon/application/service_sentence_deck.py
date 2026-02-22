@@ -1,7 +1,11 @@
+import asyncio
+import itertools
+
 from domain.models.deck import Deck, build_deck_name
 from domain.models.deck_entry import DeckEntry
 from domain.models.grammar_options import GrammarOptions
 from domain.models.vocab_list import VocabList
+from domain.repository.sentence_repository import SentenceRepository
 from domain.sentence_generator import SentenceGenerator
 from domain.tts_generator import TtsGenerator
 
@@ -11,9 +15,11 @@ class SentenceDeckService:
         self,
         generator: SentenceGenerator,
         tts: TtsGenerator | None = None,
+        sentence_repo: SentenceRepository | None = None,
     ) -> None:
         self._generator = generator
         self._tts = tts
+        self._sentence_repo = sentence_repo
 
     async def build_deck(
         self,
@@ -23,20 +29,65 @@ class SentenceDeckService:
         grammar_options_list: list[GrammarOptions],
         with_audio: bool,
     ) -> Deck:
-        sentences = await self._generator.generate_all_sentence(
-            vocab, L2, grammar_options_list
-        )
+        nouns = list(set(vocab.subjects + vocab.objects))
+        noun_pairs = [list(pair) for pair in itertools.combinations(nouns, 2)]
 
-        # Derive a representative tense/type for the deck name (use first options entry)
+        all_combos = [
+            (noun_pair, verb, opts)
+            for opts in grammar_options_list
+            for verb in vocab.verbs
+            for noun_pair in noun_pairs
+        ]
+
+        # Split into cache hits and misses
+        hits: list[tuple[object, list[str], str]] = []
+        to_generate: list[tuple[list[str], str, GrammarOptions]] = []
+
+        for noun_pair, verb, opts in all_combos:
+            if self._sentence_repo is not None:
+                result = self._sentence_repo.find(L1, L2, noun_pair, verb, opts)
+                if result is not None:
+                    sentence, _ = result
+                    hits.append((sentence, noun_pair, verb))
+                    continue
+            to_generate.append((noun_pair, verb, opts))
+
+        # Batch generate cache misses
+        new_sentences: list[tuple[object, list[str], str]] = []
+        if to_generate:
+            generated = await asyncio.gather(*[
+                self._generator.generate_sentence(
+                    nouns=n, verb=v, target_language=L2, grammar_options=opts
+                )
+                for (n, v, opts) in to_generate
+            ])
+            for (n, v, _opts), sentence in zip(to_generate, generated):
+                new_sentences.append((sentence, n, v))
+
+        # Persist newly generated sentences
+        if self._sentence_repo is not None:
+            for sentence, n, v in new_sentences:
+                try:
+                    self._sentence_repo.save(sentence, n, v)
+                except ValueError:
+                    pass  # already cached (race condition)
+
+        all_triples = hits + new_sentences
+
+        # Derive deck name metadata from first grammar options
         first_opts = grammar_options_list[0] if grammar_options_list else None
         tense = first_opts.tense if first_opts else None
         sentence_type = first_opts.sentence_type if first_opts else None
 
+        voice_name = getattr(self._tts, "_voice_name", "")
+
         entries: list[DeckEntry] = []
-        for sentence in sentences:
+        for sentence, n, v in all_triples:
             audio_path: str | None = None
             if with_audio and self._tts is not None:
                 audio_path = self._tts.generate(sentence)
+                if self._sentence_repo is not None:
+                    self._sentence_repo.set_audio_path(sentence, n, v, audio_path, voice_name, "")
 
             tags: list[str] = [
                 sentence.grammar_options.tense.value,

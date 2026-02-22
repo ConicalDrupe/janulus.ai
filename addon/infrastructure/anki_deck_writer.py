@@ -13,7 +13,7 @@ class AnkiDeckWriter(DeckWriter):
     def __init__(self, output_dir: Path) -> None:
         self.output_dir = output_dir
 
-    def write(self, deck: Deck) -> str:
+    def _build_package(self, deck: Deck) -> tuple[genanki.Package, str]:
         deck_id = abs(hash(deck.name)) % (10**10)
 
         anki_model = genanki.Model(
@@ -49,7 +49,16 @@ class AnkiDeckWriter(DeckWriter):
             )
             anki_deck.add_note(note)
 
-        output_path = self.output_dir / f"{deck.name}.apkg"
-        genanki.Package(anki_deck, media_files=media_files).write_to_file(str(output_path))
+        return genanki.Package(anki_deck, media_files=media_files), deck.name
 
-        return deck.name
+    def write(self, deck: Deck) -> str:
+        package, deck_name = self._build_package(deck)
+        output_path = self.output_dir / f"{deck_name}.apkg"
+        package.write_to_file(str(output_path))
+        return deck_name
+
+    def write_to_collection(self, deck: Deck) -> str:
+        """Import directly into the open Anki collection. Only works inside Anki."""
+        package, deck_name = self._build_package(deck)
+        package.write_to_collection_from_addon()
+        return deck_name
