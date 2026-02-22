@@ -32,4 +32,5 @@ def load_infra_config() -> InfraConfig:
 
 def make_engine(config: InfraConfig) -> Engine:
     config.user_files_dir.mkdir(parents=True, exist_ok=True)
+    config.audio_dir.mkdir(parents=True, exist_ok=True)
     return create_engine(f"sqlite:///{config.db_path}")
