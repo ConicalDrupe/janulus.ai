@@ -1,0 +1,89 @@
+from domain.models.vocab_list import VocabList
+
+QUICKSTART_PACKS: dict[str, VocabList] = {
+    "Core Pronouns": VocabList(
+        subjects=["I", "you", "he", "she", "we", "they", "it"],
+        objects=["me", "you", "him", "her", "us", "them", "it"],
+        verbs=["to be", "to have", "to do"],
+    ),
+    "Survival Basics": VocabList(
+        subjects=["I", "you", "we"],
+        objects=["water", "food", "help", "the bathroom", "the price", "this", "that"],
+        verbs=["to want", "to need", "to have", "to understand", "to speak", "to know"],
+    ),
+    "Daily Routine": VocabList(
+        subjects=["I", "we", "you"],
+        objects=["coffee", "breakfast", "lunch", "dinner", "work", "home", "bed"],
+        verbs=[
+            "to wake up",
+            "to eat",
+            "to drink",
+            "to go",
+            "to work",
+            "to come home",
+            "to sleep",
+        ],
+    ),
+    "Self Introduction": VocabList(
+        subjects=["I", "my name"],
+        objects=[
+            "a student",
+            "a teacher",
+            "years old",
+            "English",
+            "this city",
+            "a friend",
+        ],
+        verbs=["to be", "to live", "to work", "to speak", "to learn", "to come from"],
+    ),
+    "Shopping & Dining": VocabList(
+        subjects=["I", "we"],
+        objects=[
+            "coffee",
+            "water",
+            "tea",
+            "bread",
+            "this",
+            "the bill",
+            "the menu",
+            "a table",
+        ],
+        verbs=["to want", "to order", "to have", "to like", "to buy", "to pay"],
+    ),
+        "Interrogatives": VocabList(
+        subjects=[
+            "I", "you", "he", "she", "we", "they",
+            "who", "what", "which", "where"
+        ],
+        objects=[
+            "what", "who", "which", "where", "when",
+            "this", "that", "it",
+        ],
+        verbs=[
+            "to be",
+            "to know",
+            "to like",
+            "to mean"
+        ],
+    ),
+
+    "Personal Introductions": VocabList(
+        subjects=["I", "you", "we"],
+        objects=[
+            "my name",
+            "your name",
+            "a student",
+            "a teacher",
+            "a friend",
+            "from the city",
+            "from the country",
+        ],
+        verbs=[
+            "to be",
+            "to speak",
+            "to like",
+            "to meet"
+        ],
+    ),
+}
+}

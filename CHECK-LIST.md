@@ -24,8 +24,8 @@
 - [x] Support Audio (Need to verify)
 
 ## Text-to-Speech
-- [ ] Domain ABC
-- [ ] Infrastructure Google Implementation
+- [x] Domain ABC
+- [x] Infrastructure Google Implementation
 - [ ] Infrastructure Eleven Labs Implementation
 
 # Use Cases
