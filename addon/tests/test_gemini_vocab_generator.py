@@ -1,20 +1,36 @@
 import sys
 from pathlib import Path
+import os 
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from domain.models.user_qa import UserQA
+from domain.models.llm_options import LLMOptions
+from google import genai
+from infrastructure.models.gemini_generated_vocab import GeminiGeneratedVocabList
 
+from infrastructure.gemini_vocab_generator import GeminiVocabGenerator
+
+target_language = "Hindi"
 Q = ["What do you like to do during your free time? ", "What is your occupation/work?"]
 A = [
     "I like to paint and hang out with my friends",
     "I am a student studying Electrical Engineering",
 ]
-Userinfo = UserQA(Q, A)
-response = f"""You are an expert linguistic. You are helping a beginner learn {target_language}. They are a complete beginner. You should help provide them with sentences they can use in their daily lives. To do so, first ask the user the following questions.
-{"\n".join(f"Q{i}: {q}" for i, q in enumerate(UserQA.questions, start=1))}
-Then, based on context (implicit and explicit) of their answers, come up with some subject, object, and verbs that they would use use. With up to 5 subjects, 5 verbs, and 10 objects. Be sure to give general yet applicable vocabulary words. Here is their response. Give me the english vocab words. Be sure to include meta-context. 
-{"\n".join(f"Q{i}: {a}" for i, a in enumerate(UserQA.answers, start=1))}"""
+user_info = UserQA(Q, A)
+def vocab_generation():
+    llm_options = LLMOptions(model_id="gemini-3-flash-preview")
 
-print(response)
+    project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
 
+    google_client = genai.Client(vertexai=True, project=project_id, location="global")
+
+    vocab_list_generator = GeminiVocabGenerator(client=google_client, llm_options=llm_options
+    )
+    vocab_list = vocab_list_generator.generate_vocab(user_info, target_language
+    )
+
+    print(vocab_list)
+
+if __name__ == "__main__":
+    vocab_generation()
