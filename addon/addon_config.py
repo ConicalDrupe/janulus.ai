@@ -15,6 +15,7 @@ class InfraConfig:
     audio_dir: Path
     google_project_id: str
     google_location: str
+    elevenlabs_api_key: str
 
 
 def load_infra_config() -> InfraConfig:
@@ -27,6 +28,7 @@ def load_infra_config() -> InfraConfig:
         audio_dir=user_files_dir / "audio",
         google_project_id=os.getenv("GOOGLE_CLOUD_PROJECT", ""),
         google_location=os.getenv("GOOGLE_CLOUD_LOCATION", "global"),
+        elevenlabs_api_key=os.getenv("ELEVENLABS_API_KEY", ""),
     )
 
 

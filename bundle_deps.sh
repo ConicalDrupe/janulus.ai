@@ -7,4 +7,5 @@ uv pip install --target=addon/external genanki
 uv pip install --target=addon/external google
 uv pip install --target=addon/external google-genai
 uv pip install --target=addon/external sqlalchemy
+uv pip install --target=addon/external elevenlabs
 echo "Done. Commit addon/external/ to include in addon distribution."

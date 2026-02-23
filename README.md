@@ -49,11 +49,17 @@ Traditional rule-based approaches require hand-coded morphology tables, conjugat
 
 - [Anki](https://apps.ankiweb.net/) (version 23.10 or later recommended)
 - A Google Cloud project with the Gemini API enabled
-- Two environment variables set in your shell:
+- Two environment variables set in your shell (required for Gemini):
 
 ```sh
 export GOOGLE_CLOUD_PROJECT="your-project-id"
 export GOOGLE_CLOUD_LOCATION="global"
+```
+
+- If using ElevenLabs for TTS, also set:
+
+```sh
+export ELEVENLABS_API_KEY="your-elevenlabs-api-key"
 ```
 
 ### Installation
@@ -63,6 +69,19 @@ export GOOGLE_CLOUD_LOCATION="global"
    - **Windows**: `%APPDATA%\Anki2\addons21\janulus_ai\`
 2. Install bundled Python dependencies by running `bundle_deps.sh` from the project root.
 3. Restart Anki.
+
+### Configuration
+
+The addon reads its settings from `addon/config.json`. The key options:
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `L2` | `"hindi"` | Target language |
+| `tts_provider` | `"gemini"` | TTS backend — `"gemini"` or `"elevenlabs"` |
+| `tts_voice` | `"Achird"` | Gemini voice name (only used when `tts_provider` is `"gemini"`) |
+| `elevenlabs_voice_id` | `""` | ElevenLabs voice ID (only used when `tts_provider` is `"elevenlabs"`) |
+
+To switch to ElevenLabs TTS, set `"tts_provider": "elevenlabs"` and provide a valid `"elevenlabs_voice_id"` in `config.json`. Voice IDs can be found in the [ElevenLabs voice library](https://elevenlabs.io/voice-library). The `ELEVENLABS_API_KEY` environment variable must also be set.
 
 ### Quick Walkthrough
 

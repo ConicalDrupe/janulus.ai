@@ -30,11 +30,13 @@ from addon_config import InfraConfig
 from application.service_sentence_deck import SentenceDeckService
 from domain.models.deck import Deck
 from domain.models.grammar_options import GrammarOptions, SentenceType, Tense
+from domain.tts_generator import TtsGenerator
 from domain.quickstart_packs.packs import QUICKSTART_PACKS
 from infrastructure.anki_deck_writer import AnkiDeckWriter
 from infrastructure.csv_deck_writer import CsvDeckWriter
 from infrastructure.gemini_sentence_generator import GeminiSentenceGenerator
 from infrastructure.gemini_sentence_validator import GeminiSentenceValidator
+from infrastructure.elevenlabs_tts_generator import ElevenLabsTtsGenerator
 from infrastructure.gemini_tts_generator import GeminiTtsGenerator, plain_language_to_bcp47
 from sqlalchemy import Engine
 
@@ -335,13 +337,21 @@ class JanulusDialog(QDialog):
 
         generator = GeminiSentenceGenerator(client=client, llm_options=llm_options)
 
-        tts: GeminiTtsGenerator | None = None
+        tts: TtsGenerator | None = None
         if self._tts_check.isChecked():
-            tts = GeminiTtsGenerator(
-                audio_dir=self._infra_config.audio_dir,
-                client=client,
-                voice_name=self._voice_combo.currentText(),
-            )
+            provider = self._user_config.get("tts_provider", "gemini")
+            if provider == "elevenlabs":
+                tts = ElevenLabsTtsGenerator(
+                    audio_dir=self._infra_config.audio_dir,
+                    api_key=self._infra_config.elevenlabs_api_key,
+                    voice_id=self._user_config.get("elevenlabs_voice_id", ""),
+                )
+            else:
+                tts = GeminiTtsGenerator(
+                    audio_dir=self._infra_config.audio_dir,
+                    client=client,
+                    voice_name=self._voice_combo.currentText(),
+                )
 
         from infrastructure.repository.sqlite_sentence_repository import SqliteSentenceRepository
         sentence_repo = SqliteSentenceRepository(self._engine)
