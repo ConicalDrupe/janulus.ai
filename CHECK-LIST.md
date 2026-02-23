@@ -7,7 +7,8 @@
 - [x] Domain Entities (VocabList)
 - [x] Domain Abstract Class
 - [ ] Infrastructure Concrete Class
-- [ ] Test
+- [ ] Infrastructure Test
+- [ ] Create Application Use-case
 
 ## Sentence Generation
 - [x] Domain GrammarOptions
@@ -26,15 +27,17 @@
 ## Text-to-Speech
 - [x] Domain ABC
 - [x] Infrastructure Google Implementation
-- [ ] Infrastructure Eleven Labs Implementation
+- [x] Infrastructure Eleven Labs Implementation
 
 # Use Cases
 
-# Sentence Generator
 - [ ] Generate Personalized Vocab -> Insert into Anki or Save as CSV (save tags too)
+- [ ] Generate Personalized Vocab -> Generate Sentences -> Insert into Anki or Save as CSV (save tags too)
+    - [ ] Same as above, but generate vocab from quickstart lists. (common questions, needs, etc.)
+- [ ] Ingest Vocab (Selection of Anki Deck or CSV) -> Requires Ingest
+    - [ ] Ingest Interface + Parser
+    - [ ] Part of speech labeler
 - [x] Generate Quickstart Vocab -> Insert into Anki or Save as CSV (save tags too)
-<!-- - [ ] Ingest Vocab (Selection of Anki Deck or CSV) -->
-- [ ] Generate Vocab -> Generate Sentences -> Insert into Anki or Save as CSV (save tags too)
 - [x] Save Sentences to Anki or CSV (save tags)
 
 ### Caching
@@ -43,10 +46,19 @@
  - [x] DbSentence (hash_id, L1,L2,L1_text,L2_text,audio,tags)
 
 
-# Demo
+# Improvements
+- [ ] Remove Async garbage
+- [ ] Use Gemini batch api
+    - [ ] Correct Semiphore calls
+    - [ ] Exponential backoff
+- [ ] Strategy Pattern for different sentence types/grammatical options. (Different specialized prompts for different options)
+- [ ] Autosave to csv after generation (so we dont loose progress?)
+- [ ] UI: Generation % complete bar
+- [ ] Generation History UI (language,vocab, grammar options)
+
 
 # Submission
-- [ ] 2-min video
-- [ ] github readme
-    - [ ] Use instructions
-- [ ] DevPost
+- [x] 2-min video
+- [x] github readme
+    - [x] Use instructions
+- [x] DevPost
