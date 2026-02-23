@@ -2,6 +2,7 @@ import hashlib
 from pathlib import Path
 
 from elevenlabs import ElevenLabs
+from elevenlabs.types import VoiceSettings
 from domain.models.generated_sentence import GeneratedSentence
 from domain.tts_generator import TtsGenerator
 
@@ -35,6 +36,7 @@ class ElevenLabsTtsGenerator(TtsGenerator):
             voice_id=self._voice_id,
             text=sentence.L2_text,
             model_id=self._model_id,
+            voice_settings=VoiceSettings(speed=0.7),
         )
         with open(output_path, "wb") as f:
             for chunk in audio_iter:

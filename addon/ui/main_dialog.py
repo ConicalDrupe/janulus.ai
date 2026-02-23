@@ -6,6 +6,7 @@ All Qt imports go through aqt.qt so we stay compatible with Anki's
 bundled PyQt version.
 """
 import asyncio
+import importlib.util as _ilu
 import traceback
 from pathlib import Path
 
@@ -20,8 +21,10 @@ from aqt.qt import (
     QMessageBox,
     QPushButton,
     QRadioButton,
+    QTabWidget,
     QThread,
     QVBoxLayout,
+    QWidget,
     Qt,
     pyqtSignal,
 )
@@ -45,6 +48,16 @@ try:
     _GENAI_AVAILABLE = True
 except ImportError:
     _GENAI_AVAILABLE = False
+
+# ─── Load ElevenLabs voice IDs ────────────────────────────────────────────────
+
+_el_spec = _ilu.spec_from_file_location(
+    "el_voice_ids",
+    Path(__file__).parent.parent / "infrastructure" / "lang-lookups" / "eleven-labs-voice-id.py",
+)
+_el_mod = _ilu.module_from_spec(_el_spec)
+_el_spec.loader.exec_module(_el_mod)
+_EL_VOICE_IDS: dict[str, str] = _el_mod.el_voice_ids  # name → ID
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -84,6 +97,9 @@ _SENTENCE_TYPE_LABELS: dict[SentenceType, str] = {
     SentenceType.EXCLAMATORY: "Exclamatory",
     SentenceType.IMPERATIVE: "Imperative",
 }
+
+_PROVIDER_LABELS = {"gemini": "Gemini", "elevenlabs": "ElevenLabs"}
+_PROVIDER_KEYS = {v: k for k, v in _PROVIDER_LABELS.items()}  # "Gemini" → "gemini"
 
 # ─── Worker thread ────────────────────────────────────────────────────────────
 
@@ -155,7 +171,16 @@ class JanulusDialog(QDialog):
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         root.addWidget(title)
 
-        # ── Language & voice ──
+        # ── Tab widget ──
+        tabs = QTabWidget()
+        root.addWidget(tabs)
+
+        # ════ "Generate" tab ════
+        generate_tab = QWidget()
+        generate_layout = QVBoxLayout(generate_tab)
+        tabs.addTab(generate_tab, "Generate")
+
+        # ── Language settings (target language only) ──
         lang_box = QGroupBox("Language settings")
         lang_layout = QVBoxLayout(lang_box)
 
@@ -166,14 +191,7 @@ class JanulusDialog(QDialog):
         lang_row.addWidget(self._lang_combo, 1)
         lang_layout.addLayout(lang_row)
 
-        voice_row = QHBoxLayout()
-        voice_row.addWidget(QLabel("TTS Voice:"))
-        self._voice_combo = QComboBox()
-        self._voice_combo.addItems(_GEMINI_TTS_VOICES)
-        voice_row.addWidget(self._voice_combo, 1)
-        lang_layout.addLayout(voice_row)
-
-        root.addWidget(lang_box)
+        generate_layout.addWidget(lang_box)
 
         # ── Vocab source ──
         vocab_box = QGroupBox("Vocab source")
@@ -193,7 +211,7 @@ class JanulusDialog(QDialog):
         self._personalized_radio.setEnabled(False)
         vocab_layout.addWidget(self._personalized_radio)
 
-        root.addWidget(vocab_box)
+        generate_layout.addWidget(vocab_box)
 
         # ── Grammar options ──
         grammar_box = QGroupBox("Grammar options")
@@ -229,21 +247,21 @@ class JanulusDialog(QDialog):
         extra_row.addWidget(self._possession_check)
         grammar_layout.addLayout(extra_row)
 
-        root.addWidget(grammar_box)
+        generate_layout.addWidget(grammar_box)
 
         # ── TTS checkbox ──
         self._tts_check = QCheckBox("Include TTS audio")
         self._tts_check.setChecked(True)
-        root.addWidget(self._tts_check)
+        generate_layout.addWidget(self._tts_check)
 
         # ── Generate button ──
         self._generate_btn = QPushButton("Generate")
         self._generate_btn.clicked.connect(self._on_generate)
-        root.addWidget(self._generate_btn)
+        generate_layout.addWidget(self._generate_btn)
 
         # ── Status ──
         self._status_label = QLabel("Status: Ready")
-        root.addWidget(self._status_label)
+        generate_layout.addWidget(self._status_label)
 
         # ── Export buttons ──
         export_row = QHBoxLayout()
@@ -257,16 +275,57 @@ class JanulusDialog(QDialog):
 
         export_row.addWidget(self._save_anki_btn)
         export_row.addWidget(self._save_csv_btn)
-        root.addLayout(export_row)
+        generate_layout.addLayout(export_row)
+
+        # ════ "TTS" tab ════
+        tts_tab = QWidget()
+        tts_tab_layout = QVBoxLayout(tts_tab)
+        tabs.addTab(tts_tab, "TTS")
+
+        tts_box = QGroupBox("TTS Settings")
+        tts_box_layout = QVBoxLayout(tts_box)
+
+        # Provider row
+        provider_row = QHBoxLayout()
+        provider_row.addWidget(QLabel("Provider:"))
+        self._provider_combo = QComboBox()
+        self._provider_combo.addItems(list(_PROVIDER_LABELS.values()))
+        provider_row.addWidget(self._provider_combo, 1)
+        tts_box_layout.addLayout(provider_row)
+
+        # Gemini voice row (wrapped in QWidget for easy show/hide)
+        self._gemini_voice_row = QWidget()
+        gemini_voice_inner = QHBoxLayout(self._gemini_voice_row)
+        gemini_voice_inner.setContentsMargins(0, 0, 0, 0)
+        gemini_voice_inner.addWidget(QLabel("Gemini voice:"))
+        self._voice_combo = QComboBox()
+        self._voice_combo.addItems(_GEMINI_TTS_VOICES)
+        gemini_voice_inner.addWidget(self._voice_combo, 1)
+        tts_box_layout.addWidget(self._gemini_voice_row)
+
+        # ElevenLabs voice row
+        self._el_voice_row = QWidget()
+        el_voice_inner = QHBoxLayout(self._el_voice_row)
+        el_voice_inner.setContentsMargins(0, 0, 0, 0)
+        el_voice_inner.addWidget(QLabel("ElevenLabs voice:"))
+        self._el_voice_combo = QComboBox()
+        self._el_voice_combo.addItems(list(_EL_VOICE_IDS.keys()))
+        el_voice_inner.addWidget(self._el_voice_combo, 1)
+        tts_box_layout.addWidget(self._el_voice_row)
+
+        tts_tab_layout.addWidget(tts_box)
+        tts_tab_layout.addStretch()
 
         # ── Close ──
         close_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         close_box.rejected.connect(self.reject)
         root.addWidget(close_box)
 
-        # Persist language/voice changes
+        # Persist changes
         self._lang_combo.currentTextChanged.connect(self._on_lang_changed)
         self._voice_combo.currentTextChanged.connect(self._on_voice_changed)
+        self._provider_combo.currentTextChanged.connect(self._on_provider_changed)
+        self._el_voice_combo.currentTextChanged.connect(self._on_el_voice_changed)
 
     # ── Config helpers ────────────────────────────────────────────────────────
 
@@ -281,6 +340,25 @@ class JanulusDialog(QDialog):
         if idx >= 0:
             self._voice_combo.setCurrentIndex(idx)
 
+        # Provider
+        provider_key = self._user_config.get("tts_provider", "gemini")
+        provider_label = _PROVIDER_LABELS.get(provider_key, "Gemini")
+        self._provider_combo.setCurrentText(provider_label)
+        self._update_voice_rows(provider_label)
+
+        # ElevenLabs voice (match by ID value; default to first entry)
+        el_id = self._user_config.get("elevenlabs_voice_id", "")
+        matched = False
+        for name, vid in _EL_VOICE_IDS.items():
+            if vid == el_id:
+                self._el_voice_combo.setCurrentText(name)
+                matched = True
+                break
+        if not matched and _EL_VOICE_IDS:
+            first_name = next(iter(_EL_VOICE_IDS))
+            self._el_voice_combo.setCurrentText(first_name)
+            self._user_config["elevenlabs_voice_id"] = _EL_VOICE_IDS[first_name]
+
     def _save_user_config(self):
         try:
             from aqt import mw
@@ -294,6 +372,19 @@ class JanulusDialog(QDialog):
 
     def _on_voice_changed(self, text: str):
         self._user_config["tts_voice"] = text
+        self._save_user_config()
+
+    def _on_provider_changed(self, label: str):
+        self._user_config["tts_provider"] = _PROVIDER_KEYS[label]
+        self._update_voice_rows(label)
+        self._save_user_config()
+
+    def _update_voice_rows(self, label: str):
+        self._gemini_voice_row.setVisible(label == "Gemini")
+        self._el_voice_row.setVisible(label == "ElevenLabs")
+
+    def _on_el_voice_changed(self, name: str):
+        self._user_config["elevenlabs_voice_id"] = _EL_VOICE_IDS.get(name, "")
         self._save_user_config()
 
     # ── Generation ────────────────────────────────────────────────────────────
@@ -341,10 +432,15 @@ class JanulusDialog(QDialog):
         if self._tts_check.isChecked():
             provider = self._user_config.get("tts_provider", "gemini")
             if provider == "elevenlabs":
+                voice_id = self._user_config.get("elevenlabs_voice_id", "")
+                if not voice_id:
+                    raise RuntimeError(
+                        "No ElevenLabs voice selected. Open the TTS tab and choose a voice."
+                    )
                 tts = ElevenLabsTtsGenerator(
                     audio_dir=self._infra_config.audio_dir,
                     api_key=self._infra_config.elevenlabs_api_key,
-                    voice_id=self._user_config.get("elevenlabs_voice_id", ""),
+                    voice_id=voice_id,
                 )
             else:
                 tts = GeminiTtsGenerator(
